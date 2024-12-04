@@ -77,7 +77,7 @@ Welcome to the **Ready-to-Use Nuxt Template**! This project is designed to provi
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/nuxt-template.git
+git clone https://github.com/iEnzO233/nuxt-template.git
 cd nuxt-template
 ```
 
