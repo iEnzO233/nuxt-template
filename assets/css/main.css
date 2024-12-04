@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+body.light {
+    --primary-color: #1d4ed8;
+    --background-color: #ffffff;
+    --text-color: #111827;
+}
+
+body.dark {
+    --primary-color: #3b82f6;
+    --background-color: #1f2937;
+    --text-color: #f3f4f6;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
