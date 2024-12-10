@@ -1,31 +1,11 @@
 <script setup>
-const coreStore = useCoreStore();
-const toast = useToast();
-
-watch(
-    () => coreStore.errors,
-    (newErrors) => {
-      if (newErrors && newErrors.length > 0) {
-        newErrors.forEach((error) => {
-          toast.add({
-            title: "Error",
-            description: error,
-            color: "error",
-            timeout: 5000,
-          });
-        });
-
-        coreStore.errors = []; // Clear errors after displaying them
-      }
-    },
-    { deep: true, immediate: true }
-);
+import { fa_ir } from '@nuxt/ui/locale'
 </script>
 
 
 <template>
   <div>
-    <UApp>
+    <UApp :locale="fa_ir">
       <NuxtLayout>
         <NuxtPage />
       </NuxtLayout>

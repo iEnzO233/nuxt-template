@@ -1,41 +1,48 @@
-import { defineEventHandler, readBody, getQuery } from "h3";
-
 export default defineEventHandler(async (event) => {
-    const runtimeConfig = useRuntimeConfig();
+    const config = useRuntimeConfig();
+    const baseURL = config.public.backBaseUrl;
 
-    let url, options;
+    // Read the request body
+    const postParams = await readBody(event);
 
-    // Handle GET requests with query parameters
-    if (event.node.req.method === "GET") {
-        const query = getQuery(event); // Extract query parameters
-        url = query.url; // URL is passed as a query parameter
-        options = {}; // No additional options for GET requests
-    } else {
-        // Handle non-GET requests with body
-        const body = await readBody(event);
-        url = body.url;
-        options = body.options || {};
-    }
-
-    if (!url) {
+    if (!postParams || !postParams.endPoint || !postParams.options) {
         throw createError({
             statusCode: 400,
-            message: "The 'url' parameter is required.",
+            statusMessage: "Invalid request parameters",
         });
     }
 
-    const backendUrl = `${runtimeConfig.public.backBaseUrl}${url}`; // Use backend base URL
+    const url = baseURL + postParams.endPoint;
+
+    // Forward headers, ensuring the Authorization header and other headers are included
+    const headers = {
+        ...postParams.options.headers, // Include any headers sent from the client
+    };
+
+    if (!headers.Authorization) {
+        // Add Authorization token if not explicitly set
+        const authToken = getHeader(event, "authorization");
+        if (authToken) {
+            headers.Authorization = authToken;
+        }
+    }
+
+    // Configure fetch options
+    const fetchOptions = {
+        ...postParams.options, // Include all options sent by the client
+        headers, // Override headers with merged headers
+    };
 
     try {
-        const response = await $fetch.raw(backendUrl, {
-            ...options,
-        });
+        // Send the request to the backend
+        const response = await $fetch.raw(url, fetchOptions);
 
-        event.res.statusCode = response.status;
-        return response._data; // Return the raw response data
+        // Forward status code and response data
+        event.res.statusCode = response.status; // Set response status
+        return response._data; // Return the response body
     } catch (error) {
-        // Handle errors and set appropriate status code
+        // Handle errors
         event.res.statusCode = error?.response?.status || 500;
-        return error?.data || { message: "An unexpected error occurred." };
+        return error.data || { message: "An unexpected error occurred." };
     }
 });

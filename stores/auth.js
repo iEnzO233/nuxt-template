@@ -1,8 +1,10 @@
 import { defineStore } from "pinia";
-import { apiRequest } from "~/utils/apiRequest";
+import ApiService from "~/utils/ApiService";
+import { useCoreStore } from "~/stores/core";
 
 export const useAuthStore = defineStore("auth", () => {
     const coreStore = useCoreStore();
+
     // State
     const token = ref(null);
     const authenticated = ref(false);
@@ -55,73 +57,59 @@ export const useAuthStore = defineStore("auth", () => {
 
     // Auth Functions
     const sendOtp = async () => {
-        const { data, error } = await apiRequest("/login-register", {
-            method: "POST",
-            body: { mobile: phoneNumber.value },
-        });
-
-        if (!error) {
+        try {
+            const { data } = await ApiService.post("/login-register", { mobile: phoneNumber.value });
             otpSent.value = true;
             startTimer();
+        } catch (error) {
+            console.error("Failed to send OTP:", error);
         }
     };
 
     const handleLogin = async () => {
-        const { data, error } = await apiRequest("/otp", {
-            method: "POST",
-            body: { mobile: phoneNumber.value, code: otpCode.value },
-        });
-        let rawData = toRaw(data.data)
-        if (rawData) {
-            coreStore.saveToken(rawData.token); // Save token to cookie
-            setAuthData(rawData.user, rawData.token);
+        try {
+            const { data } = await ApiService.post("/otp", { mobile: phoneNumber.value, code: otpCode.value });
+            coreStore.saveToken(data.token); // Save token to cookie
+            setAuthData(data.user, data.token);
             navigateTo("/");
-        } else if (error) {
+        } catch (error) {
             console.error("Login failed:", error);
         }
     };
 
     const loginWithPassword = async () => {
-        const { data, error } = await apiRequest("/login", {
-            method: "POST",
-            body: { mobile: phoneNumber.value, password: password.value },
-        });
-        let rawData = toRaw(data.data)
-        if (rawData) {
-            coreStore.saveToken(rawData.token); // Save token to cookie
-            setAuthData(rawData.user, rawData.token);
+        try {
+            const { data } = await ApiService.post("/login", { mobile: phoneNumber.value, password: password.value });
+            coreStore.saveToken(data.token); // Save token to cookie
+            setAuthData(data.user, data.token);
             navigateTo("/");
-        } else if (error) {
+        } catch (error) {
             console.error("Login failed:", error);
         }
     };
 
     const sendForgotPasswordOtp = async () => {
-        const { data, error } = await apiRequest("/password/forgot", {
-            method: "POST",
-            body: { mobile: phoneNumber.value },
-        });
-
-        if (!error) {
+        try {
+            const { data } = await ApiService.post("/password/forgot", { mobile: phoneNumber.value });
             otpSent.value = true;
             forgetPasswordStep.value = 2;
             startTimer();
+        } catch (error) {
+            console.error("Failed to send OTP for password reset:", error);
         }
     };
 
     const resetPassword = async () => {
-        const { data, error } = await apiRequest("/password/reset", {
-            method: "POST",
-            body: {
+        try {
+            await ApiService.post("/password/reset", {
                 mobile: phoneNumber.value,
                 token: otpCode.value,
                 password: password.value,
                 password_confirmation: passwordConfirmation.value,
-            },
-        });
-
-        if (!error) {
+            });
             resetFormState();
+        } catch (error) {
+            console.error("Password reset failed:", error);
         }
     };
 
@@ -133,20 +121,16 @@ export const useAuthStore = defineStore("auth", () => {
         navigateTo("/auth/login");
     };
 
-
     const checkAuth = async () => {
-        const { data, error } = await apiRequest("/check-token", {
-            method: "GET",
-        });
-
-        if (error) {
-            logout(true);
-        } else {
+        try {
+            const { data } = await ApiService.get("/check-token");
             authenticated.value = true;
-            token.value = data?.token || null;
+            token.value = coreStore.getToken();
+            profile.value = data.user || {};
+        } catch (error) {
+            logout();
         }
     };
-
 
     // Helper to process login data
     const setAuthData = (user, authToken) => {
@@ -155,7 +139,6 @@ export const useAuthStore = defineStore("auth", () => {
         profile.value = user;
         console.log("User authenticated:", user);
     };
-
 
     return {
         // State

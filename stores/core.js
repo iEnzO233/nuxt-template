@@ -5,9 +5,6 @@ import { defineStore } from "pinia";
 export const useCoreStore = defineStore("core", () => {
     const TOKEN_KEY = "auth_token";
 
-    // Reactive state
-    const errors = ref([]);
-
     // Token Management
     const getToken = () => {
         return useCookie(TOKEN_KEY, { path: "/", sameSite: "strict" }).value; // Ensure the token is scoped properly
@@ -27,7 +24,6 @@ export const useCoreStore = defineStore("core", () => {
     };
 
     return {
-        errors,
         getToken,
         saveToken,
         destroyToken,

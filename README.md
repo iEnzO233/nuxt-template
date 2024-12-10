@@ -59,7 +59,7 @@ Welcome to the **Ready-to-Use Nuxt Template**! This project is designed to provi
 │   ├── core.js                   # Core store for token and error handling
 │   ├── auth.js                   # Authentication store
 ├── /utils/
-│   ├── apiRequest.js             # API request utility
+│   ├── ApiService.js             # API request utility
 ├── /components/
 │   ├── LoginForm.vue             # Login form component
 │   ├── ForgetPassword.vue        # Forgot password component
